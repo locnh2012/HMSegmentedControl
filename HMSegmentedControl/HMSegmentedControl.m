@@ -394,9 +394,13 @@
             CGFloat textWidth = 0;
             
             if (self.segmentWidthStyle == HMSegmentedControlSegmentWidthStyleFixed) {
-                imageXOffset = (self.segmentWidth * idx) + (self.segmentWidth / 2.0f) - (imageWidth / 2.0f);
-                textXOffset = self.segmentWidth * idx;
-                textWidth = self.segmentWidth;
+                // imageXOffset = (self.segmentWidth * idx) + (self.segmentWidth / 2.0f) - (imageWidth / 2.0f);
+                // textXOffset = self.segmentWidth * idx;
+                // textWidth = self.segmentWidth;
+                
+                imageXOffset = self.segmentWidth * idx;
+                textXOffset = self.segmentWidth * idx + imageWidth;
+                textWidth = self.segmentWidth - imageWidth;
             } else if (self.segmentWidthStyle == HMSegmentedControlSegmentWidthStyleDynamic) {
                 // When we are drawing dynamic widths, we need to loop the widths array to calculate the xOffset
                 CGFloat xOffset = 0;
@@ -411,12 +415,16 @@
                     i++;
                 }
                 
-                imageXOffset = xOffset + ([self.segmentWidthsArray[idx] floatValue] / 2.0f) - (imageWidth / 2.0f); //(self.segmentWidth / 2.0f) - (imageWidth / 2.0f)
-                textXOffset = xOffset;
-                textWidth = [self.segmentWidthsArray[idx] floatValue];
+                // imageXOffset = xOffset + ([self.segmentWidthsArray[idx] floatValue] / 2.0f) - (imageWidth / 2.0f); //(self.segmentWidth / 2.0f) - (imageWidth / 2.0f)
+                // textXOffset = xOffset;
+                // textWidth = [self.segmentWidthsArray[idx] floatValue];
+                
+                imageXOffset = xOffset; //(self.segmentWidth / 2.0f) - (imageWidth / 2.0f)
+                textXOffset = xOffset + imageWidth;
+                textWidth = [self.segmentWidthsArray[idx] floatValue] - imageWidth;
             }
             
-            CGFloat imageYOffset = roundf((CGRectGetHeight(self.frame) - self.selectionIndicatorHeight) / 2.0f);
+            CGFloat imageYOffset = roundf(((CGRectGetHeight(self.frame) - self.selectionIndicatorHeight) / 2.0f) - (imageHeight / 2));
             CGRect imageRect = CGRectMake(imageXOffset, imageYOffset, imageWidth, imageHeight);
             CGRect textRect = CGRectMake(textXOffset, yOffset, textWidth, stringHeight);
             
@@ -661,7 +669,7 @@
             UIImage *sectionImage = [self.sectionImages objectAtIndex:i];
             CGFloat imageWidth = sectionImage.size.width + self.segmentEdgeInset.left;
             
-            CGFloat combinedWidth = MAX(imageWidth, stringWidth);
+            CGFloat combinedWidth = imageWidth + stringWidth + 16;//MAX(imageWidth, stringWidth);
             
             [mutableSegmentWidths addObject:[NSNumber numberWithFloat:combinedWidth]];
         }];
