@@ -228,11 +228,22 @@ typedef NS_ENUM(NSInteger, HMSegmentedControlType) {
  */
 @property (nonatomic) BOOL shouldAnimateUserSelection;
 
+/**
+ */
+@property (nonatomic) BOOL hasExtendModule;
+
+/**
+ */
+@property (nonatomic) BOOL isShowExtendModule;
+
 - (id)initWithSectionTitles:(NSArray<NSString *> *)sectiontitles;
 - (id)initWithSectionImages:(NSArray<UIImage *> *)sectionImages sectionSelectedImages:(NSArray<UIImage *> *)sectionSelectedImages;
 - (instancetype)initWithSectionImages:(NSArray<UIImage *> *)sectionImages sectionSelectedImages:(NSArray<UIImage *> *)sectionSelectedImages titlesForSections:(NSArray<NSString *> *)sectiontitles;
 - (void)setSelectedSegmentIndex:(NSUInteger)index animated:(BOOL)animated;
 - (void)setIndexChangeBlock:(IndexChangeBlock)indexChangeBlock;
 - (void)setTitleFormatter:(HMTitleFormatterBlock)titleFormatter;
+- (void)setShowExtendView:(BOOL)isShow;
+- (void)setInitFrame:(CGRect)initFrame;
 
+- (void)setExtendView:(UIView *)view extendViewSize:(CGSize)size;
 @end

@@ -10,7 +10,12 @@
 #import <QuartzCore/QuartzCore.h>
 #import <math.h>
 
+const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
+
 @interface HMScrollView : UIScrollView
+@end
+
+@interface HMExtendView : UIView
 @end
 
 @interface HMSegmentedControl ()
@@ -21,6 +26,7 @@
 @property (nonatomic, readwrite) CGFloat segmentWidth;
 @property (nonatomic, readwrite) NSArray<NSNumber *> *segmentWidthsArray;
 @property (nonatomic, strong) HMScrollView *scrollView;
+@property (nonatomic, strong) HMExtendView *extendView;
 
 @end
 
@@ -52,7 +58,13 @@
 
 @end
 
+@implementation HMExtendView
+@end
+
 @implementation HMSegmentedControl
+{
+    CGRect mInitFrame;
+}
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
@@ -123,11 +135,16 @@
 }
 
 - (void)commonInit {
+    
+    self.hasExtendModule = YES;
+    self.isShowExtendModule = YES;
+    
     self.scrollView = [[HMScrollView alloc] init];
     self.scrollView.scrollsToTop = NO;
     self.scrollView.showsVerticalScrollIndicator = NO;
     self.scrollView.showsHorizontalScrollIndicator = NO;
     [self addSubview:self.scrollView];
+    self.scrollView.backgroundColor = [UIColor greenColor];
     
     _backgroundColor = [UIColor whiteColor];
     self.opaque = NO;
@@ -162,6 +179,17 @@
     self.contentMode = UIViewContentModeRedraw;
 }
 
+- (CGRect)getScrollViewFrame {
+    if (!self.hasExtendModule) return self.frame;
+    
+    CGRect newFrame = mInitFrame;
+    
+    CGFloat height = DEFAULT_EXTEND_MODULE_HEIGHT;
+    if (self.extendView) height = CGRectGetHeight(self.extendView.frame);
+    newFrame.size.height = newFrame.size.height - height;
+    return newFrame;
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     
@@ -172,6 +200,11 @@
     [super setFrame:frame];
     
     [self updateSegmentsRects];
+}
+
+- (void)setInitFrame:(CGRect)initFrame {
+    mInitFrame = initFrame;
+    [self setFrame:initFrame];
 }
 
 - (void)setSectionTitles:(NSArray<NSString *> *)sectionTitles {
@@ -270,6 +303,8 @@
     [self.backgroundColor setFill];
     UIRectFill([self bounds]);
     
+    CGRect realFrame = [self getScrollViewFrame];
+    
     self.selectionIndicatorArrowLayer.backgroundColor = self.selectionIndicatorColor.CGColor;
     
     self.selectionIndicatorStripLayer.backgroundColor = self.selectionIndicatorColor.CGColor;
@@ -297,11 +332,11 @@
             BOOL locationUp = (self.selectionIndicatorLocation == HMSegmentedControlSelectionIndicatorLocationUp);
             BOOL selectionStyleNotBox = (self.selectionStyle != HMSegmentedControlSelectionStyleBox);
 
-            CGFloat y = roundf((CGRectGetHeight(self.frame) - selectionStyleNotBox * self.selectionIndicatorHeight) / 2 - stringHeight / 2 + self.selectionIndicatorHeight * locationUp);
+            CGFloat y = roundf((CGRectGetHeight(realFrame) - selectionStyleNotBox * self.selectionIndicatorHeight) / 2 - stringHeight / 2 + self.selectionIndicatorHeight * locationUp);
             CGRect rect;
             if (self.segmentWidthStyle == HMSegmentedControlSegmentWidthStyleFixed) {
                 rect = CGRectMake((self.segmentWidth * idx) + (self.segmentWidth - stringWidth) / 2, y, stringWidth, stringHeight);
-                rectDiv = CGRectMake((self.segmentWidth * idx) - (self.verticalDividerWidth / 2), self.selectionIndicatorHeight * 2, self.verticalDividerWidth, self.frame.size.height - (self.selectionIndicatorHeight * 4));
+                rectDiv = CGRectMake((self.segmentWidth * idx) - (self.verticalDividerWidth / 2), self.selectionIndicatorHeight * 2, self.verticalDividerWidth, realFrame.size.height - (self.selectionIndicatorHeight * 4));
                 fullRect = CGRectMake(self.segmentWidth * idx, 0, self.segmentWidth, oldRect.size.height);
             } else {
                 // When we are drawing dynamic widths, we need to loop the widths array to calculate the xOffset
@@ -317,7 +352,7 @@
                 CGFloat widthForIndex = [[self.segmentWidthsArray objectAtIndex:idx] floatValue];
                 rect = CGRectMake(xOffset, y, widthForIndex, stringHeight);
                 fullRect = CGRectMake(self.segmentWidth * idx, 0, widthForIndex, oldRect.size.height);
-                rectDiv = CGRectMake(xOffset - (self.verticalDividerWidth / 2), self.selectionIndicatorHeight * 2, self.verticalDividerWidth, self.frame.size.height - (self.selectionIndicatorHeight * 4));
+                rectDiv = CGRectMake(xOffset - (self.verticalDividerWidth / 2), self.selectionIndicatorHeight * 2, self.verticalDividerWidth, realFrame.size.height - (self.selectionIndicatorHeight * 4));
             }
             
             // Fix rect position/size to avoid blurry labels
@@ -350,7 +385,7 @@
             UIImage *icon = iconImage;
             CGFloat imageWidth = icon.size.width;
             CGFloat imageHeight = icon.size.height;
-            CGFloat y = roundf(CGRectGetHeight(self.frame) - self.selectionIndicatorHeight) / 2 - imageHeight / 2 + ((self.selectionIndicatorLocation == HMSegmentedControlSelectionIndicatorLocationUp) ? self.selectionIndicatorHeight : 0);
+            CGFloat y = roundf(CGRectGetHeight(realFrame) - self.selectionIndicatorHeight) / 2 - imageHeight / 2 + ((self.selectionIndicatorLocation == HMSegmentedControlSelectionIndicatorLocationUp) ? self.selectionIndicatorHeight : 0);
             CGFloat x = self.segmentWidth * idx + (self.segmentWidth - imageWidth)/2.0f;
             CGRect rect = CGRectMake(x, y, imageWidth, imageHeight);
             
@@ -372,7 +407,7 @@
             // Vertical Divider
             if (self.isVerticalDividerEnabled && idx>0) {
                 CALayer *verticalDividerLayer = [CALayer layer];
-                verticalDividerLayer.frame = CGRectMake((self.segmentWidth * idx) - (self.verticalDividerWidth / 2), self.selectionIndicatorHeight * 2, self.verticalDividerWidth, self.frame.size.height-(self.selectionIndicatorHeight * 4));
+                verticalDividerLayer.frame = CGRectMake((self.segmentWidth * idx) - (self.verticalDividerWidth / 2), self.selectionIndicatorHeight * 2, self.verticalDividerWidth, realFrame.size.height-(self.selectionIndicatorHeight * 4));
                 verticalDividerLayer.backgroundColor = self.verticalDividerColor.CGColor;
                 
                 [self.scrollView.layer addSublayer:verticalDividerLayer];
@@ -387,7 +422,7 @@
             CGFloat imageHeight = icon.size.height;
 			
             CGFloat stringHeight = [self measureTitleAtIndex:idx].height;
-			CGFloat yOffset = roundf(((CGRectGetHeight(self.frame) - self.selectionIndicatorHeight) / 2) - (stringHeight / 2));
+			CGFloat yOffset = roundf(((CGRectGetHeight(realFrame) - self.selectionIndicatorHeight) / 2) - (stringHeight / 2));
             
             CGFloat imageXOffset = self.segmentEdgeInset.left; // Start with edge inset
             CGFloat textXOffset  = self.segmentEdgeInset.left;
@@ -424,7 +459,7 @@
                 textWidth = [self.segmentWidthsArray[idx] floatValue] - imageWidth;
             }
             
-            CGFloat imageYOffset = roundf(((CGRectGetHeight(self.frame) - self.selectionIndicatorHeight) / 2.0f) - (imageHeight / 2));
+            CGFloat imageYOffset = roundf(((CGRectGetHeight(realFrame) - self.selectionIndicatorHeight) / 2.0f) - (imageHeight / 2));
             CGRect imageRect = CGRectMake(imageXOffset, imageYOffset, imageWidth, imageHeight);
             CGRect textRect = CGRectMake(textXOffset, yOffset, textWidth, stringHeight);
             
@@ -552,7 +587,7 @@
     CGFloat indicatorYOffset = 0.0f;
     
     if (self.selectionIndicatorLocation == HMSegmentedControlSelectionIndicatorLocationDown) {
-        indicatorYOffset = self.bounds.size.height - self.selectionIndicatorHeight + self.selectionIndicatorEdgeInsets.bottom;
+        indicatorYOffset = [self getScrollViewFrame].size.height - self.selectionIndicatorHeight + self.selectionIndicatorEdgeInsets.bottom;
     }
     
     if (self.selectionIndicatorLocation == HMSegmentedControlSelectionIndicatorLocationUp) {
@@ -623,14 +658,19 @@
             i++;
         }
         
-        return CGRectMake(selectedSegmentOffset, 0, [[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue], CGRectGetHeight(self.frame));
+        return CGRectMake(selectedSegmentOffset, 0, [[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue], CGRectGetHeight([self getScrollViewFrame]));
     }
-    return CGRectMake(self.segmentWidth * self.selectedSegmentIndex, 0, self.segmentWidth, CGRectGetHeight(self.frame));
+    return CGRectMake(self.segmentWidth * self.selectedSegmentIndex, 0, self.segmentWidth, CGRectGetHeight([self getScrollViewFrame]));
 }
 
 - (void)updateSegmentsRects {
+//    float fSegmentedControlHeight = CGRectGetHeight(self.frame);
+//    float fScrollViewHeight = fSegmentedControlHeight;
+//    if (self.hasSearchAndCategoryModule)
+//        fScrollViewHeight = fSegmentedControlHeight - SEARCH_CATEGORIES_MODULE_HEIGHT;
+    
     self.scrollView.contentInset = UIEdgeInsetsZero;
-    self.scrollView.frame = CGRectMake(0, 0, CGRectGetWidth(self.frame), CGRectGetHeight(self.frame));
+    self.scrollView.frame = CGRectMake(0, 0, CGRectGetWidth(self.frame), CGRectGetHeight([self getScrollViewFrame]));
     
     if ([self sectionCount] > 0) {
         self.segmentWidth = self.frame.size.width / [self sectionCount];
@@ -677,7 +717,7 @@
     }
 
     self.scrollView.scrollEnabled = self.isUserDraggable;
-    self.scrollView.contentSize = CGSizeMake([self totalSegmentedControlWidth], self.frame.size.height);
+    self.scrollView.contentSize = CGSizeMake([self totalSegmentedControlWidth], CGRectGetHeight([self getScrollViewFrame]));
 }
 
 - (NSUInteger)sectionCount {
@@ -765,7 +805,7 @@
         rectForSelectedIndex = CGRectMake(self.segmentWidth * self.selectedSegmentIndex,
                                           0,
                                           self.segmentWidth,
-                                          self.frame.size.height);
+                                          [self getScrollViewFrame].size.height);
         
         selectedSegmentOffset = (CGRectGetWidth(self.frame) / 2) - (self.segmentWidth / 2);
     } else {
@@ -781,7 +821,7 @@
         rectForSelectedIndex = CGRectMake(offsetter,
                                           0,
                                           [[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue],
-                                          self.frame.size.height);
+                                          [self getScrollViewFrame].size.height);
         
         selectedSegmentOffset = (CGRectGetWidth(self.frame) / 2) - ([[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue] / 2);
     }
@@ -907,4 +947,72 @@
     return [resultingAttrs copy];
 }
 
+#pragma mark -
+#pragma mark ExtendView
+- (void)setExtendView:(UIView *)view extendViewSize:(CGSize)size
+{
+    [self initExtendViewIfExists:size];
+    [self extendViewSetContentView:view];
+}
+
+- (void)extendViewSetContentView:(UIView*)contentView
+{
+    if (!self.extendView) return;
+    
+//    contentView.translatesAutoresizingMaskIntoConstraints = NO;
+//    self.extendView.translatesAutoresizingMaskIntoConstraints = NO;
+    [contentView setFrame:CGRectMake(0, 0, CGRectGetWidth(self.extendView.frame), CGRectGetHeight(self.extendView.frame))];
+    [self.extendView addSubview:contentView];
+    
+//    [self.extendView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
+//                                                                            options:0
+//                                                                            metrics:nil
+//                                                                              views:NSDictionaryOfVariableBindings(contentView)]];
+//    [self.extendView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[contentView]|"
+//                                                                            options:0
+//                                                                            metrics:nil
+//                                                                              views:NSDictionaryOfVariableBindings(contentView)]];
+//    [contentView addConstraint:[NSLayoutConstraint constraintWithItem:contentView
+//                                                                attribute:NSLayoutAttributeHeight
+//                                                                relatedBy:NSLayoutRelationEqual
+//                                                                   toItem:nil
+//                                                                attribute:NSLayoutAttributeNotAnAttribute
+//                                                               multiplier:1.0
+//                                                                 constant:40]];
+//    [contentView addConstraint:[NSLayoutConstraint constraintWithItem:contentView
+//                                                                attribute:NSLayoutAttributeWidth
+//                                                                relatedBy:NSLayoutRelationEqual
+//                                                                   toItem:nil
+//                                                                attribute:NSLayoutAttributeNotAnAttribute
+//                                                               multiplier:1.0
+//                                                                 constant:320]];
+}
+
+- (void)initExtendViewIfExists:(CGSize)size
+{
+    if (!self.extendView) {
+        float y = CGRectGetHeight([self getScrollViewFrame]);
+        NSLog(@"HMSegmentedControl::initExtendViewIfExists:y: %f", y);
+        self.extendView = [[HMExtendView alloc] initWithFrame:CGRectMake(0, CGRectGetHeight([self getScrollViewFrame]), size.width, size.height)];
+        self.clipsToBounds = YES;
+        [self addSubview:self.extendView];
+        self.extendView.backgroundColor = [UIColor yellowColor];
+    }
+    
+    NSLog(@"HMSegmentedControl::initExtendViewIfExists:subView.size: %d", (int)[self.subviews count]);
+}
+
+#pragma mark -
+#pragma mark custom
+- (void)setShowExtendView:(BOOL)isShow {
+    if (!self.hasExtendModule) return;
+    
+    self.isShowExtendModule = isShow;
+    
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
+    
+    if (!self.isShowExtendModule) [self setFrame:[self getScrollViewFrame]];
+    else [self setFrame:mInitFrame];
+}
 @end
