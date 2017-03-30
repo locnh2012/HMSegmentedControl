@@ -144,7 +144,6 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
     self.scrollView.showsVerticalScrollIndicator = NO;
     self.scrollView.showsHorizontalScrollIndicator = NO;
     [self addSubview:self.scrollView];
-    self.scrollView.backgroundColor = [UIColor greenColor];
     
     _backgroundColor = [UIColor whiteColor];
     self.opaque = NO;
@@ -959,33 +958,8 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
 {
     if (!self.extendView) return;
     
-//    contentView.translatesAutoresizingMaskIntoConstraints = NO;
-//    self.extendView.translatesAutoresizingMaskIntoConstraints = NO;
     [contentView setFrame:CGRectMake(0, 0, CGRectGetWidth(self.extendView.frame), CGRectGetHeight(self.extendView.frame))];
     [self.extendView addSubview:contentView];
-    
-//    [self.extendView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
-//                                                                            options:0
-//                                                                            metrics:nil
-//                                                                              views:NSDictionaryOfVariableBindings(contentView)]];
-//    [self.extendView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[contentView]|"
-//                                                                            options:0
-//                                                                            metrics:nil
-//                                                                              views:NSDictionaryOfVariableBindings(contentView)]];
-//    [contentView addConstraint:[NSLayoutConstraint constraintWithItem:contentView
-//                                                                attribute:NSLayoutAttributeHeight
-//                                                                relatedBy:NSLayoutRelationEqual
-//                                                                   toItem:nil
-//                                                                attribute:NSLayoutAttributeNotAnAttribute
-//                                                               multiplier:1.0
-//                                                                 constant:40]];
-//    [contentView addConstraint:[NSLayoutConstraint constraintWithItem:contentView
-//                                                                attribute:NSLayoutAttributeWidth
-//                                                                relatedBy:NSLayoutRelationEqual
-//                                                                   toItem:nil
-//                                                                attribute:NSLayoutAttributeNotAnAttribute
-//                                                               multiplier:1.0
-//                                                                 constant:320]];
 }
 
 - (void)initExtendViewIfExists:(CGSize)size
@@ -996,7 +970,6 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
         self.extendView = [[HMExtendView alloc] initWithFrame:CGRectMake(0, CGRectGetHeight([self getScrollViewFrame]), size.width, size.height)];
         self.clipsToBounds = YES;
         [self addSubview:self.extendView];
-        self.extendView.backgroundColor = [UIColor yellowColor];
     }
     
     NSLog(@"HMSegmentedControl::initExtendViewIfExists:subView.size: %d", (int)[self.subviews count]);
