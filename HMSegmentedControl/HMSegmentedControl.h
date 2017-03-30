@@ -242,8 +242,9 @@ typedef NS_ENUM(NSInteger, HMSegmentedControlType) {
 - (void)setSelectedSegmentIndex:(NSUInteger)index animated:(BOOL)animated;
 - (void)setIndexChangeBlock:(IndexChangeBlock)indexChangeBlock;
 - (void)setTitleFormatter:(HMTitleFormatterBlock)titleFormatter;
+
+- (CGRect)getScrollViewFrame;
 - (void)setShowExtendView:(BOOL)isShow;
 - (void)setInitFrame:(CGRect)initFrame;
-
 - (void)setExtendView:(UIView *)view extendViewSize:(CGSize)size;
 @end
