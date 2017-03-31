@@ -136,8 +136,8 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
 
 - (void)commonInit {
     
-    self.hasExtendModule = YES;
-    self.isShowExtendModule = YES;
+    self.hasExtendModule = NO;
+    self.isShowExtendModule = NO;
     
     self.scrollView = [[HMScrollView alloc] init];
     self.scrollView.scrollsToTop = NO;
@@ -176,6 +176,8 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
     self.selectionIndicatorBoxOpacity = 0.2;
     
     self.contentMode = UIViewContentModeRedraw;
+    self.contentEdgeInset = UIEdgeInsetsMake(0.0f, 0.0f, 0.0f, 0.0f);
+    self.contentSpacing = 5.0f;
 }
 
 - (CGRect)getScrollViewFrame {
@@ -421,6 +423,7 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
             CGFloat imageHeight = icon.size.height;
 			
             CGFloat stringHeight = [self measureTitleAtIndex:idx].height;
+            CGFloat stringWidth = [self measureTitleAtIndex:idx].width;
 			CGFloat yOffset = roundf(((CGRectGetHeight(realFrame) - self.selectionIndicatorHeight) / 2) - (stringHeight / 2));
             
             CGFloat imageXOffset = self.segmentEdgeInset.left; // Start with edge inset
@@ -432,12 +435,27 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
                 // textXOffset = self.segmentWidth * idx;
                 // textWidth = self.segmentWidth;
                 
-                imageXOffset = self.segmentWidth * idx;
-                textXOffset = self.segmentWidth * idx + imageWidth;
-                textWidth = self.segmentWidth - imageWidth;
+                CGFloat paddingLeft = 0.0f;
+                CGFloat paddingRight = 0.0f;
+                if (idx == 0)
+                    paddingLeft = self.contentEdgeInset.left;
+                else if (idx == ([self.sectionTitles count] - 1))
+                    paddingRight = self.contentEdgeInset.right;
+                
+//                imageXOffset = paddingLeft + self.segmentWidth * idx;
+//                textXOffset = self.segmentWidth * idx + imageWidth;
+//                textWidth = self.segmentWidth - imageWidth - (paddingLeft + paddingRight);
+                
+                imageXOffset = self.segmentWidth * idx + (self.segmentWidth - (paddingLeft + imageWidth + stringWidth + self.contentSpacing)) / 2;
+                textXOffset = imageXOffset + imageWidth + self.contentSpacing;
+                textWidth = stringWidth;
+                
             } else if (self.segmentWidthStyle == HMSegmentedControlSegmentWidthStyleDynamic) {
                 // When we are drawing dynamic widths, we need to loop the widths array to calculate the xOffset
                 CGFloat xOffset = 0;
+                if (idx == 0)
+                    xOffset += self.segmentEdgeInset.left;
+                
                 NSInteger i = 0;
                 
                 for (NSNumber *width in self.segmentWidthsArray) {
@@ -453,14 +471,28 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
                 // textXOffset = xOffset;
                 // textWidth = [self.segmentWidthsArray[idx] floatValue];
                 
-                imageXOffset = xOffset; //(self.segmentWidth / 2.0f) - (imageWidth / 2.0f)
-                textXOffset = xOffset + imageWidth;
-                textWidth = [self.segmentWidthsArray[idx] floatValue] - imageWidth;
+                CGFloat paddingLeft = 0.0f;
+                CGFloat paddingRight = 0.0f;
+                if (idx == 0)
+                    paddingLeft = self.contentEdgeInset.left;
+                else if (idx == ([self.sectionTitles count] - 1))
+                    paddingRight = self.contentEdgeInset.right;
+                
+//                imageXOffset = paddingLeft + xOffset; //(self.segmentWidth / 2.0f) - (imageWidth / 2.0f)
+//                textXOffset = xOffset + imageWidth;
+//                textWidth = [self.segmentWidthsArray[idx] floatValue] - imageWidth - (paddingLeft + paddingRight);
+                
+                imageXOffset = paddingLeft + xOffset + ([self.segmentWidthsArray[idx] floatValue] - (paddingLeft + imageWidth + stringWidth + self.contentSpacing)) / 2;
+                textXOffset = imageXOffset + imageWidth + self.contentSpacing;
+                textWidth = stringWidth;
             }
             
             CGFloat imageYOffset = roundf(((CGRectGetHeight(realFrame) - self.selectionIndicatorHeight) / 2.0f) - (imageHeight / 2));
             CGRect imageRect = CGRectMake(imageXOffset, imageYOffset, imageWidth, imageHeight);
             CGRect textRect = CGRectMake(textXOffset, yOffset, textWidth, stringHeight);
+//            NSLog(@"HMSegmentedControl::drawRect:========> Segment: %d", (int)idx);
+//            NSLog(@"HMSegmentedControl::drawRect:textRect: %@", NSStringFromCGRect(textRect));
+//            NSLog(@"HMSegmentedControl::drawRect:segment.width: %f", [self.segmentWidthsArray[idx] floatValue]);
             
             // Fix rect position/size to avoid blurry labels
             textRect = CGRectMake(ceilf(textRect.origin.x), ceilf(textRect.origin.y), ceilf(textRect.size.width), ceilf(textRect.size.height));
@@ -614,7 +646,14 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
         CGFloat widthToStartOfSelectedIndex = (self.segmentWidth * self.selectedSegmentIndex);
         
         CGFloat x = widthToStartOfSelectedIndex + ((widthToEndOfSelectedSegment - widthToStartOfSelectedIndex) / 2) - (self.selectionIndicatorHeight/2);
-        return CGRectMake(x - (self.selectionIndicatorHeight / 2), indicatorYOffset, self.selectionIndicatorHeight * 2, self.selectionIndicatorHeight);
+        CGFloat paddingLeft = 0.0f;
+        CGFloat paddingRight = 0.0f;
+        if (self.selectedSegmentIndex == 0)
+            paddingLeft = self.contentEdgeInset.left;
+        else if (self.selectedSegmentIndex == ([self.sectionTitles count] - 1))
+            paddingRight = self.contentEdgeInset.right;
+        x += paddingLeft;
+        return CGRectMake(x - (self.selectionIndicatorHeight / 2), indicatorYOffset, self.selectionIndicatorHeight * 2 - (paddingLeft + paddingRight), self.selectionIndicatorHeight);
     } else {
         if (self.selectionStyle == HMSegmentedControlSelectionStyleTextWidthStripe &&
             sectionWidth <= self.segmentWidth &&
@@ -622,8 +661,19 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
             CGFloat widthToEndOfSelectedSegment = (self.segmentWidth * self.selectedSegmentIndex) + self.segmentWidth;
             CGFloat widthToStartOfSelectedIndex = (self.segmentWidth * self.selectedSegmentIndex);
             
+            CGFloat paddingLeft = 0.0f;
+            CGFloat paddingRight = 0.0f;
+            if (self.selectedSegmentIndex == 0)
+                paddingLeft = self.contentEdgeInset.left;
+            else if (self.selectedSegmentIndex == ([self.sectionTitles count] - 1))
+                paddingRight = self.contentEdgeInset.right;
+            
             CGFloat x = ((widthToEndOfSelectedSegment - widthToStartOfSelectedIndex) / 2) + (widthToStartOfSelectedIndex - sectionWidth / 2);
-            return CGRectMake(x + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, sectionWidth - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight);
+            x += paddingLeft;
+            
+            CGFloat width = sectionWidth - paddingLeft - paddingRight;
+            
+            return CGRectMake(x + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, width - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight);
         } else {
             if (self.segmentWidthStyle == HMSegmentedControlSegmentWidthStyleDynamic) {
                 CGFloat selectedSegmentOffset = 0.0f;
@@ -635,10 +685,25 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
                     selectedSegmentOffset = selectedSegmentOffset + [width floatValue];
                     i++;
                 }
-                return CGRectMake(selectedSegmentOffset + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, [[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue] - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight + self.selectionIndicatorEdgeInsets.bottom);
+                
+                CGFloat paddingLeft = 0.0f;
+                CGFloat paddingRight = 0.0f;
+                if (self.selectedSegmentIndex == 0)
+                    paddingLeft = self.contentEdgeInset.left;
+                else if (self.selectedSegmentIndex == ([self.sectionTitles count] - 1))
+                    paddingRight = self.contentEdgeInset.right;
+                
+                return CGRectMake(paddingLeft + selectedSegmentOffset + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, [[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue] - self.selectionIndicatorEdgeInsets.right - (paddingLeft + paddingRight), self.selectionIndicatorHeight + self.selectionIndicatorEdgeInsets.bottom);
             }
             
-            return CGRectMake((self.segmentWidth + self.selectionIndicatorEdgeInsets.left) * self.selectedSegmentIndex, indicatorYOffset, self.segmentWidth - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight);
+            CGFloat paddingLeft = 0.0f;
+            CGFloat paddingRight = 0.0f;
+            if (self.selectedSegmentIndex == 0)
+                paddingLeft = self.contentEdgeInset.left;
+            else if (self.selectedSegmentIndex == ([self.sectionTitles count] - 1))
+                paddingRight = self.contentEdgeInset.right;
+            
+            return CGRectMake(paddingLeft + (self.segmentWidth + self.selectionIndicatorEdgeInsets.left) * self.selectedSegmentIndex, indicatorYOffset, self.segmentWidth - self.selectionIndicatorEdgeInsets.right - paddingLeft - paddingRight, self.selectionIndicatorHeight);
         }
     }
 }
