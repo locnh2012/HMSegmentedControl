@@ -10,7 +10,8 @@
 #import <QuartzCore/QuartzCore.h>
 #import <math.h>
 
-const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
+const float DEFAULT_EXTEND_MODULE_HEIGHT_IPHONE = 40.0f;
+const float DEFAULT_EXTEND_MODULE_HEIGHT_IPAD = 80.0f;
 
 @interface HMScrollView : UIScrollView
 @end
@@ -184,8 +185,12 @@ const float DEFAULT_EXTEND_MODULE_HEIGHT = 40.0f;
     if (!self.hasExtendModule) return self.frame;
     
     CGRect newFrame = mInitFrame;
-    
-    CGFloat height = DEFAULT_EXTEND_MODULE_HEIGHT;
+
+    CGFloat height = DEFAULT_EXTEND_MODULE_HEIGHT_IPHONE;
+    if ( UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad )
+    {
+        height = DEFAULT_EXTEND_MODULE_HEIGHT_IPAD;
+    }
     if (self.extendView) height = CGRectGetHeight(self.extendView.frame);
     newFrame.size.height = newFrame.size.height - height;
     return newFrame;
