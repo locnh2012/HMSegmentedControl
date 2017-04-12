@@ -11,7 +11,7 @@
 #import <math.h>
 
 const float DEFAULT_EXTEND_MODULE_HEIGHT_IPHONE = 40.0f;
-const float DEFAULT_EXTEND_MODULE_HEIGHT_IPAD = 80.0f;
+const float DEFAULT_EXTEND_MODULE_HEIGHT_IPAD = 60.0f;
 
 @interface HMScrollView : UIScrollView
 @end
